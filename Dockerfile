@@ -4,7 +4,7 @@ FROM n8nio/n8n:latest
 USER root
 
 # Installer LibreOffice
-RUN apk add --no-cache libreoffice
+RUN apk add --no-cache libreoffice openjdk17
 
 # Revenir à l’utilisateur par défaut de n8n
 USER node
