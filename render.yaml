@@ -1,0 +1,66 @@
+services:
+  - type: web
+    name: n8n
+    env: docker
+    region: frankfurt  # Hébergement dans la région Europe (changer si besoin)
+    plan: free         # Plan gratuit (changer si besoin)
+    branch: main       # Utilisation de la branche principale
+    numInstances: 1    # Une seule instance (augmenter si nécessaire)
+    healthCheckPath: /healthz  # Vérification de l'état du service
+
+    envVars:
+      - key: DB_TYPE
+        value: postgresdb
+      - key: DB_POSTGRESDB_HOST
+        fromDatabase:
+          name: n8nDB
+          property: host
+      - key: DB_POSTGRESDB_DATABASE
+        fromDatabase:
+          name: n8nDB
+          property: database
+      - key: DB_POSTGRESDB_PORT
+        fromDatabase:
+          name: n8nDB
+          property: port
+      - key: DB_POSTGRESDB_USER
+        fromDatabase:
+          name: n8nDB
+          property: user
+      - key: DB_POSTGRESDB_PASSWORD
+        fromDatabase:
+          name: n8nDB
+          property: password
+
+      # Définition du port sur lequel n8n va écouter
+      - key: PORT
+        value: 5678
+
+      # Configuration de la journalisation
+      - key: N8N_LOG_LEVEL
+        value: info  # Possible: debug, verbose, info, warn, error
+
+      # Optimisation des exécutions
+      - key: EXECUTIONS_PROCESS
+        value: main  # Possible: own (par défaut) ou main
+
+      # Sécurisation des données (clé de chiffrement des données sensibles)
+      - key: N8N_ENCRYPTION_KEY
+        generateValue: true  # Génère une clé unique automatiquement
+
+      # URL Webhook (nécessaire pour les automatisations)
+      - key: WEBHOOK_URL
+        value: https://votre-instance.render.com/  # Remplacez par l'URL de votre instance
+
+      # Configuration de la timezone et de la locale
+      - key: GENERIC_TIMEZONE
+        value: Europe/Paris
+      - key: TZ
+        value: Europe/Paris
+      - key: N8N_DEFAULT_LOCALE
+        value: fr  # Français comme langue par défaut
+
+databases:
+  - name: n8nDB
+    region: frankfurt  # Région du serveur PostgreSQL
+    plan: free         # Base de données gratuite (mise à niveau possible)
