@@ -19,6 +19,7 @@ services:
       - VUE_APP_URL_BASE_API=${VUE_APP_URL_BASE_API:-https://n8n.host.dev/}
       - N8N_PROTOCOL=${N8N_PROTOCOL:-https}
       - N8N_SECURE_COOKIE=${N8N_SECURE_COOKIE:-false}
+      - N8N_RUNNERS_ENABLED=${N8N_RUNNERS_ENABLED:-true}
     depends_on:
       - postgres
     volumes:
