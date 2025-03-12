@@ -20,6 +20,7 @@ services:
       - N8N_PROTOCOL=${N8N_PROTOCOL:-https}
       - N8N_SECURE_COOKIE=${N8N_SECURE_COOKIE:-false}
       - N8N_RUNNERS_ENABLED=${N8N_RUNNERS_ENABLED:-true}
+      - N8N_ENFORCE_SETTINGS_FILE_PERMISSIONS=true
     depends_on:
       - postgres
     volumes:
