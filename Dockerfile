@@ -19,6 +19,9 @@ RUN pnpm config set store-dir /data/custom-nodes/.pnpm-store
 # Installer TypeScript pour éviter l'erreur "tsc: not found"
 RUN pnpm add -D typescript
 
+# Installer crypto
+RUN pnpm add crypto
+
 # Installer les dépendances du nœud personnalisé avec pnpm
 WORKDIR /data/custom-nodes/nhm-docx-to-text
 RUN NODE_ENV=development pnpm install --store-dir /data/custom-nodes/.pnpm-store --frozen-lockfile && pnpm run build
