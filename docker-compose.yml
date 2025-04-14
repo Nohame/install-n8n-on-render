@@ -1,6 +1,7 @@
 services:
   n8n:
     build: .
+    image: custom-n8n:latest
     restart: unless-stopped
     ports:
       - "127.0.0.1:5678:5678"
@@ -21,6 +22,9 @@ services:
       - N8N_SECURE_COOKIE=${N8N_SECURE_COOKIE:-false}
       - N8N_RUNNERS_ENABLED=${N8N_RUNNERS_ENABLED:-true}
       - N8N_ENFORCE_SETTINGS_FILE_PERMISSIONS=true
+      - N8N_CUSTOM_LOGO_URL=https://ruedelinfo.com/wp-content/uploads/2021/03/rue-de-l-info.svg
+      - N8N_CUSTOM_WELCOME_MESSAGE="Bienvenue sur l'IA Rue de l’Info ✨"
+      - N8N_COMMUNITY_PACKAGES_ALLOW_TOOL_USAGE=true
     depends_on:
       - postgres
     volumes:
