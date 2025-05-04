@@ -17,17 +17,6 @@ YELLOW=`tput setaf 3`
 BLUE=`tput setaf 4`
 RESET_COLOR=`tput sgr0`
 
-
-#        allow 91.188.79.50;    # OTHER APPS        => kafka
-#        allow 91.188.79.34;    # BCZPEG-FRONT-01   => kafka
-#        allow 91.188.79.35;    # BCZPEG-FRONT-02   => kafka
-#        allow 91.188.79.41;    # BCZDED-FRONT-01   => kafka
-#        allow 91.188.79.42;    # BCZDED-FRONT-02   => kafka
-#        allow 139.59.171.225;  # PIM PREROD        => kafka
-#        allow 143.110.169.169; # PIM PROD          => kafka
-#        allow 109.205.66.101;  # BUREAUX           => kafka-ui
-
-
 action=$1
 APP_ENV=local
 WORKDIR='/usr/src/myapp'

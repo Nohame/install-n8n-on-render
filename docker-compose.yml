@@ -25,6 +25,7 @@ services:
       - N8N_CUSTOM_LOGO_URL=https://ruedelinfo.com/wp-content/uploads/2021/03/rue-de-l-info.svg
       - N8N_CUSTOM_WELCOME_MESSAGE="Bienvenue sur l'IA Rue de l’Info ✨"
       - N8N_COMMUNITY_PACKAGES_ALLOW_TOOL_USAGE=true
+      - N8N_PUSH_BACKEND=${N8N_PUSH_BACKEND:-websocket}
     depends_on:
       - postgres
     volumes:
