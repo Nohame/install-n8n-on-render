@@ -1,0 +1,7 @@
+.git
+.github
+.idea
+.env
+.DS_Store
+custom-nodes/nhm-docx-to-text/node_modules
+custom-nodes/nhm-docx-to-text/dist

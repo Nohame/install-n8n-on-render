@@ -1,7 +1,10 @@
 services:
   n8n:
-    build: .
-    image: custom-n8n:latest
+    build:
+      context: .
+      args:
+        N8N_VERSION: ${N8N_VERSION:-1.82.3}
+    image: custom-n8n:${N8N_VERSION:-1.82.3}
     restart: unless-stopped
     ports:
       - "127.0.0.1:5678:5678"
@@ -34,7 +37,7 @@ services:
       - n8n-net
 
   postgres:
-    image: postgres:16-alpine
+    image: postgres:${POSTGRES_VERSION:-16.8-alpine}
     restart: unless-stopped
     environment:
       - POSTGRES_USER=${POSTGRES_USER:-n8n}

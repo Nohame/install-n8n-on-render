@@ -1,1 +1,6 @@
 /.env
+/.idea/
+/AGENTS.md
+/custom-nodes/nhm-docx-to-text/node_modules/
+/custom-nodes/nhm-docx-to-text/dist/
+.DS_Store

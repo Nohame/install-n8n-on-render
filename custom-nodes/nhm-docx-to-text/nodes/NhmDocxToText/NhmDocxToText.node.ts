@@ -4,22 +4,22 @@ import type {
 	INodeType,
 	INodeTypeDescription,
 } from 'n8n-workflow';
-import { NodeConnectionType, NodeOperationError } from 'n8n-workflow';
+import { NodeOperationError } from 'n8n-workflow';
 import * as mammoth from 'mammoth';
 
 export class NhmDocxToText implements INodeType {
 	description: INodeTypeDescription = {
 		displayName: 'Nhm DOCX To Text',
 		name: 'nhmDocxToText',
-		icon: "file:nhmDocxIcon.svg",
+		icon: 'file:nhmDocxIcon.svg',
 		group: ['transform'],
 		version: 1,
 		description: 'Extracts text from a DOCX file',
 		defaults: {
 			name: 'Nhm DOCX To Text',
 		},
-		inputs: [NodeConnectionType.Main],
-		outputs: [NodeConnectionType.Main],
+		inputs: ['main'],
+		outputs: ['main'],
 		properties: [
 			{
 				displayName: 'Input Binary Field',
@@ -39,23 +39,26 @@ export class NhmDocxToText implements INodeType {
 		for (let i = 0; i < items.length; i++) {
 			try {
 				const inputField = this.getNodeParameter('inputField', i) as string;
-				const item = items[i]; // ✅ Correction pour accéder au bon objet
+				const item = items[i];
 
 				if (!item.binary || !item.binary[inputField]) {
-					throw new NodeOperationError(this.getNode(), `No binary data found for field "${inputField}"`);
+					throw new NodeOperationError(
+						this.getNode(),
+						`No binary data found for field "${inputField}"`,
+					);
 				}
 
-				// Convertir le fichier DOCX en texte
 				const docxBuffer = Buffer.from(item.binary[inputField].data, 'base64');
 				const result = await mammoth.extractRawText({ buffer: docxBuffer });
 
-				// Ajouter le texte extrait en sortie
 				returnData.push({
 					json: { text: result.value },
 				});
 			} catch (error) {
+				const message = error instanceof Error ? error.message : 'Unknown error';
+
 				if (this.continueOnFail()) {
-					returnData.push({ json: { error: error.message } });
+					returnData.push({ json: { error: message } });
 				} else {
 					throw error;
 				}
