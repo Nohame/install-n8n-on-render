@@ -3,8 +3,8 @@ services:
     build:
       context: .
       args:
-        N8N_VERSION: ${N8N_VERSION:-1.82.3}
-    image: custom-n8n:${N8N_VERSION:-1.82.3}
+        N8N_VERSION: ${N8N_VERSION:-2.11.4}
+    image: custom-n8n:${N8N_VERSION:-2.11.4}
     restart: unless-stopped
     ports:
       - "127.0.0.1:5678:5678"

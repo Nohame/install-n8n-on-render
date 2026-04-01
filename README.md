@@ -1,35 +1,74 @@
-# 🚀 n8n - Installation Facile sur Render.com
+# n8n Docker Setup with Custom DOCX Node
 
-[![Deploy to Render](https://render.com/images/deploy-to-render-button.svg)](https://render.com/deploy)
+Ce dépôt sert principalement à lancer **n8n en local avec Docker Compose**, avec une image personnalisée qui embarque le nœud privé `Nhm DOCX To Text`.
 
-## 🎯 Installation de n8n sur Render.com en un clic
+## Contenu du dépôt
 
-Vous souhaitez exécuter **n8n** gratuitement sur Render.com ? Suivez ces étapes simples pour déployer votre propre instance en quelques minutes.
+- Une stack locale `n8n + postgres` via `docker-compose.yml`
+- Une image custom buildée depuis `Dockerfile`
+- Un script d'exploitation `./docker.sh`
+- Un custom node n8n dans `custom-nodes/nhm-docx-to-text`
+- Un fichier `render.yaml` conservé pour un déploiement Render si besoin
 
-### 🛠 Étapes d'installation
+## Démarrage local
 
-1️⃣ **Cliquez sur le bouton** "Deploy to Render" ci-dessus ⬆️  
-2️⃣ **Choisissez un nom pour votre projet**, par exemple `"n8n"`  
-3️⃣ **Cliquez sur "Create New Resources"** et attendez quelques secondes ⏳  
-4️⃣ **Appliquez les modifications** et laissez Render configurer votre service  
-5️⃣ **Allez dans le tableau de bord Render** > sélectionnez votre service `"n8n"` > **Onglet "Environment"**  
-6️⃣ **Copiez l’URL** de votre instance (le lien violet en haut)  
-7️⃣ **Ajoutez cette URL comme valeur pour `WEBHOOK_URL`** dans les variables d’environnement  
-8️⃣ **Attendez une minute** que votre instance se mette à jour automatiquement 🔄  
-9️⃣ **Félicitations ! Vous pouvez maintenant utiliser n8n** 🎉  
+1. Copier l'exemple d'environnement :
 
----
+```sh
+cp .env.sample .env
+```
 
-## 💰 Coût et Limitations
+2. Ajuster au besoin les identifiants et URLs dans `.env`
 
-✅ **Gratuit pendant 90 jours** 🆓  
-⚠️ **Après 90 jours, Render demandera $7/mois pour la base de données** 🏦  
-💡 **Si vous souhaitez une alternative gratuite après 90 jours, migrez votre base de données vers un autre hébergement PostgreSQL**  
+3. Construire et démarrer la stack :
 
----
+```sh
+./docker.sh start
+```
 
-## 📌 Informations Complémentaires
+L'interface n8n est ensuite disponible sur `http://localhost:5678`.
 
-- **Site officiel de Render :** [render.com](https://render.com)  
-- **Documentation officielle de n8n :** [n8n.io](https://n8n.io)  
-- **Besoin d’aide ?** Ouvrez un ticket ou posez vos questions sur la [communauté n8n](https://community.n8n.io/)  
+## Commandes utiles
+
+```sh
+./docker.sh start
+./docker.sh stop
+./docker.sh restart
+./docker.sh update
+./docker.sh ssh
+```
+
+Le script vérifie que toutes les variables présentes dans `.env.sample` existent aussi dans `.env` avant de lancer Docker.
+
+## Versions par défaut
+
+La version n8n par défaut du dépôt est `2.11.4`.
+
+Elle est alignée entre :
+
+- `.env.sample`
+- `Dockerfile`
+- `docker-compose.yml`
+
+La version PostgreSQL par défaut est `16.8-alpine`.
+
+## Custom node inclus
+
+Le package `custom-nodes/nhm-docx-to-text` ajoute le nœud `Nhm DOCX To Text`, qui lit un fichier DOCX depuis un champ binaire n8n et renvoie le texte extrait dans `json.text`.
+
+Toute modification de ce package est prise en compte après reconstruction de l'image :
+
+```sh
+./docker.sh restart
+```
+
+## Déploiement Render
+
+Le dépôt contient encore [render.yaml](render.yaml) pour un déploiement sur Render, mais la documentation et le workflow principal sont maintenant centrés sur l'exécution locale Docker.
+
+## Références
+
+- n8n : https://n8n.io
+- Documentation n8n : https://docs.n8n.io
+- Communauté n8n : https://community.n8n.io
+- Render : https://render.com
