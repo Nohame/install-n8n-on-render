@@ -5,7 +5,7 @@ Ce dépôt sert principalement à lancer **n8n en local avec Docker Compose**, a
 ## Contenu du dépôt
 
 - Une stack locale `n8n + postgres` via `docker-compose.yml`
-- Une stack de production `queue mode + redis + postgres + traefik` via `docker-compose.prod.yml`
+- Une stack de production `queue mode + redis + postgres` derrière un reverse proxy hôte (ex: nginx) via `docker-compose.prod.yml`
 - Une image custom buildée depuis `Dockerfile`
 - Un script d'exploitation `./docker.sh`
 - Un custom node n8n dans `custom-nodes/nhm-docx-to-text`
@@ -50,12 +50,12 @@ Le script vérifie que toutes les variables présentes dans `.env.sample` existe
 
 Le fichier `docker-compose.prod.yml` est une base de production mono-hôte plus robuste, pensée pour absorber la charge en **queue mode** :
 
-- `traefik` termine le TLS et route le trafic
 - `n8n-main` sert l'UI et les API
 - `n8n-webhook` absorbe les requêtes webhook
 - `n8n-worker` exécute les jobs en arrière-plan
 - `redis` sert de broker de queue
 - `postgres` persiste les données n8n
+- le TLS et le reverse proxy sont gérés par l'hôte (par exemple nginx)
 
 ### Préparation
 
@@ -68,7 +68,6 @@ cp .env.prod.sample .env.prod
 2. Renseigner au minimum dans `.env.prod` :
 
 - les domaines `N8N_EDITOR_HOST` et `N8N_WEBHOOK_HOST`
-- `TRAEFIK_ACME_EMAIL`
 - `N8N_ENCRYPTION_KEY`
 - `N8N_RUNNERS_AUTH_TOKEN`
 - les mots de passe Postgres, Redis et Basic Auth
@@ -83,6 +82,16 @@ cp .env.prod.sample .env.prod
 ```sh
 ./docker.sh start --prod
 ```
+
+En prod, les services HTTP sont exposés uniquement en local sur l'hôte :
+
+- `127.0.0.1:5678` → interface / API `n8n-main`
+- `127.0.0.1:5679` → service `n8n-webhook`
+
+Le reverse proxy hôte (par exemple nginx) doit ensuite router :
+
+- `N8N_EDITOR_HOST` vers `http://127.0.0.1:5678`
+- `N8N_WEBHOOK_HOST` vers `http://127.0.0.1:5679`
 
 ### Montée en charge
 
@@ -99,9 +108,9 @@ Pour les **workers**, la contrainte officielle n8n est plus forte : en queue mod
 ### Notes d'exploitation
 
 - La stack prod suppose deux sous-domaines distincts : un pour l'éditeur, un pour les webhooks. Cela simplifie le routage et évite d'envoyer le trafic webhook vers le `main`.
+- Le reverse proxy hôte doit transmettre correctement les en-têtes `Host`, `X-Forwarded-For`, `X-Forwarded-Proto`, ainsi que `Upgrade` / `Connection` pour le websocket.
 - Le mode binaire par défaut est réglé sur `database` pour rester compatible avec le queue mode. Si tu manipules beaucoup de fichiers volumineux, passe ensuite sur un stockage externe type S3.
 - Les workers utilisent des task runners **externes**. Cela évite le warning Python et suit la recommandation n8n pour la prod.
-- Si Traefik ne voit pas Docker, ajuste `DOCKER_SOCKET_PATH` dans `.env.prod`. Sur Linux, garde `/var/run/docker.sock`. Sur certains Docker Desktop ou moteurs rootless, le socket réel peut être ailleurs.
 - Cette stack reste une base **mono-machine**. Pour de la vraie haute disponibilité infra, il faut externaliser Postgres/Redis et passer sur un orchestrateur.
 
 ## Versions par défaut

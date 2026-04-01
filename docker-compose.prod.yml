@@ -3,6 +3,9 @@ x-logging: &default-logging
     max-size: "10m"
     max-file: "3"
 
+x-localhost-main-port: &localhost-main-port
+  - "127.0.0.1:5678:5678"
+
 x-n8n-common: &n8n-common
   build:
     context: .
@@ -79,56 +82,18 @@ x-n8n-common: &n8n-common
     - n8n-prod
 
 services:
-  traefik:
-    image: traefik:${TRAEFIK_VERSION:-v3.6}
-    restart: unless-stopped
-    user: "0:0"
-    command:
-      - --api.dashboard=false
-      - --providers.docker=true
-      - --providers.docker.endpoint=unix:///var/run/docker.sock
-      - --providers.docker.exposedbydefault=false
-      - --entrypoints.web.address=:80
-      - --entrypoints.websecure.address=:443
-      - --entrypoints.web.http.redirections.entrypoint.to=websecure
-      - --entrypoints.web.http.redirections.entrypoint.scheme=https
-      - --certificatesresolvers.letsencrypt.acme.tlschallenge=true
-      - --certificatesresolvers.letsencrypt.acme.email=${TRAEFIK_ACME_EMAIL:?TRAEFIK_ACME_EMAIL is required}
-      - --certificatesresolvers.letsencrypt.acme.storage=/letsencrypt/acme.json
-      - --ping=true
-    ports:
-      - "80:80"
-      - "443:443"
-    volumes:
-      - ${DOCKER_SOCKET_PATH:-/var/run/docker.sock}:/var/run/docker.sock:ro
-      - traefik_letsencrypt:/letsencrypt
-    logging: *default-logging
-    networks:
-      - n8n-prod
-
   n8n-main:
     <<: *n8n-common
     command: start
+    ports: *localhost-main-port
     volumes:
       - n8n_main_data:/home/node/.n8n
-    labels:
-      - traefik.enable=true
-      - traefik.docker.network=n8n-prod
-      - traefik.http.routers.n8n-editor.rule=Host(`${N8N_EDITOR_HOST:?N8N_EDITOR_HOST is required}`)
-      - traefik.http.routers.n8n-editor.entrypoints=websecure
-      - traefik.http.routers.n8n-editor.tls.certresolver=letsencrypt
-      - traefik.http.services.n8n-editor.loadbalancer.server.port=5678
 
   n8n-webhook:
     <<: *n8n-common
     command: webhook
-    labels:
-      - traefik.enable=true
-      - traefik.docker.network=n8n-prod
-      - traefik.http.routers.n8n-webhook.rule=Host(`${N8N_WEBHOOK_HOST:?N8N_WEBHOOK_HOST is required}`)
-      - traefik.http.routers.n8n-webhook.entrypoints=websecure
-      - traefik.http.routers.n8n-webhook.tls.certresolver=letsencrypt
-      - traefik.http.services.n8n-webhook.loadbalancer.server.port=5678
+    ports:
+      - "127.0.0.1:5679:5678"
 
   n8n-worker:
     <<: *n8n-common
@@ -201,4 +166,3 @@ volumes:
   n8n_main_data:
   postgres_prod_data:
   redis_data:
-  traefik_letsencrypt:
