@@ -23,7 +23,6 @@ services:
       - VUE_APP_URL_BASE_API=${VUE_APP_URL_BASE_API:-https://n8n.host.dev/}
       - N8N_PROTOCOL=${N8N_PROTOCOL:-https}
       - N8N_SECURE_COOKIE=${N8N_SECURE_COOKIE:-false}
-      - N8N_RUNNERS_ENABLED=${N8N_RUNNERS_ENABLED:-true}
       - N8N_ENFORCE_SETTINGS_FILE_PERMISSIONS=true
       - N8N_CUSTOM_LOGO_URL=https://ruedelinfo.com/wp-content/uploads/2021/03/rue-de-l-info.svg
       - N8N_CUSTOM_WELCOME_MESSAGE="Bienvenue sur l'IA Rue de l’Info ✨"

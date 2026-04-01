@@ -1,4 +1,5 @@
 /.env
+/.env.prod
 /.idea/
 /AGENTS.md
 /custom-nodes/nhm-docx-to-text/node_modules/

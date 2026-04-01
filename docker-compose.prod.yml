@@ -1,0 +1,204 @@
+x-logging: &default-logging
+  options:
+    max-size: "10m"
+    max-file: "3"
+
+x-n8n-common: &n8n-common
+  build:
+    context: .
+    args:
+      N8N_VERSION: ${N8N_VERSION:-2.11.4}
+  image: custom-n8n:${N8N_VERSION:-2.11.4}
+  restart: unless-stopped
+  init: true
+  stop_grace_period: 90s
+  depends_on:
+    postgres:
+      condition: service_healthy
+    redis:
+      condition: service_healthy
+  environment: &n8n-common-env
+    DB_TYPE: postgresdb
+    DB_POSTGRESDB_HOST: postgres
+    DB_POSTGRESDB_PORT: 5432
+    DB_POSTGRESDB_DATABASE: ${POSTGRES_DB:?POSTGRES_DB is required}
+    DB_POSTGRESDB_USER: ${POSTGRES_USER:?POSTGRES_USER is required}
+    DB_POSTGRESDB_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD is required}
+    EXECUTIONS_MODE: queue
+    OFFLOAD_MANUAL_EXECUTIONS_TO_WORKERS: "true"
+    QUEUE_BULL_REDIS_HOST: redis
+    QUEUE_BULL_REDIS_PORT: 6379
+    QUEUE_BULL_REDIS_PASSWORD: ${REDIS_PASSWORD:?REDIS_PASSWORD is required}
+    QUEUE_BULL_REDIS_DB: ${REDIS_DB:-0}
+    QUEUE_HEALTH_CHECK_ACTIVE: "true"
+    N8N_ENCRYPTION_KEY: ${N8N_ENCRYPTION_KEY:?N8N_ENCRYPTION_KEY is required}
+    N8N_BASIC_AUTH_ACTIVE: ${N8N_BASIC_AUTH_ACTIVE:-true}
+    N8N_BASIC_AUTH_USER: ${N8N_BASIC_AUTH_USER:?N8N_BASIC_AUTH_USER is required}
+    N8N_BASIC_AUTH_PASSWORD: ${N8N_BASIC_AUTH_PASSWORD:?N8N_BASIC_AUTH_PASSWORD is required}
+    N8N_HOST: ${N8N_HOST:?N8N_HOST is required}
+    N8N_PORT: 5678
+    N8N_LISTEN_ADDRESS: 0.0.0.0
+    N8N_PROTOCOL: ${N8N_PROTOCOL:-https}
+    N8N_EDITOR_BASE_URL: ${N8N_EDITOR_BASE_URL:?N8N_EDITOR_BASE_URL is required}
+    WEBHOOK_URL: ${WEBHOOK_URL:?WEBHOOK_URL is required}
+    N8N_PROXY_HOPS: ${N8N_PROXY_HOPS:-1}
+    N8N_SECURE_COOKIE: ${N8N_SECURE_COOKIE:-true}
+    N8N_ENFORCE_SETTINGS_FILE_PERMISSIONS: "true"
+    N8N_PUSH_BACKEND: ${N8N_PUSH_BACKEND:-websocket}
+    N8N_RUNNERS_MODE: external
+    N8N_RUNNERS_BROKER_LISTEN_ADDRESS: 0.0.0.0
+    N8N_RUNNERS_AUTH_TOKEN: ${N8N_RUNNERS_AUTH_TOKEN:?N8N_RUNNERS_AUTH_TOKEN is required}
+    N8N_NATIVE_PYTHON_RUNNER: ${N8N_NATIVE_PYTHON_RUNNER:-true}
+    N8N_DEFAULT_BINARY_DATA_MODE: ${N8N_DEFAULT_BINARY_DATA_MODE:-database}
+    EXECUTIONS_DATA_PRUNE: ${EXECUTIONS_DATA_PRUNE:-true}
+    EXECUTIONS_DATA_MAX_AGE: ${EXECUTIONS_DATA_MAX_AGE:-168}
+    EXECUTIONS_DATA_PRUNE_MAX_COUNT: ${EXECUTIONS_DATA_PRUNE_MAX_COUNT:-50000}
+    EXECUTIONS_DATA_SAVE_ON_SUCCESS: ${EXECUTIONS_DATA_SAVE_ON_SUCCESS:-none}
+    EXECUTIONS_DATA_SAVE_ON_ERROR: ${EXECUTIONS_DATA_SAVE_ON_ERROR:-all}
+    EXECUTIONS_DATA_SAVE_ON_PROGRESS: ${EXECUTIONS_DATA_SAVE_ON_PROGRESS:-false}
+    EXECUTIONS_DATA_SAVE_MANUAL_EXECUTIONS: ${EXECUTIONS_DATA_SAVE_MANUAL_EXECUTIONS:-true}
+    N8N_CONCURRENCY_PRODUCTION_LIMIT: ${N8N_CONCURRENCY_PRODUCTION_LIMIT:--1}
+    N8N_GRACEFUL_SHUTDOWN_TIMEOUT: ${N8N_GRACEFUL_SHUTDOWN_TIMEOUT:-60}
+    N8N_DIAGNOSTICS_ENABLED: ${N8N_DIAGNOSTICS_ENABLED:-false}
+    N8N_PERSONALIZATION_ENABLED: ${N8N_PERSONALIZATION_ENABLED:-false}
+    N8N_HIRING_BANNER_ENABLED: ${N8N_HIRING_BANNER_ENABLED:-false}
+    GENERIC_TIMEZONE: ${GENERIC_TIMEZONE:-Europe/Paris}
+    TZ: ${TZ:-Europe/Paris}
+  healthcheck:
+    test:
+      - CMD
+      - node
+      - -e
+      - fetch('http://127.0.0.1:5678/healthz').then((r)=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))
+    interval: 30s
+    timeout: 10s
+    retries: 5
+    start_period: 40s
+  logging: *default-logging
+  networks:
+    - n8n-prod
+
+services:
+  traefik:
+    image: traefik:${TRAEFIK_VERSION:-v3.6}
+    restart: unless-stopped
+    user: "0:0"
+    command:
+      - --api.dashboard=false
+      - --providers.docker=true
+      - --providers.docker.endpoint=unix:///var/run/docker.sock
+      - --providers.docker.exposedbydefault=false
+      - --entrypoints.web.address=:80
+      - --entrypoints.websecure.address=:443
+      - --entrypoints.web.http.redirections.entrypoint.to=websecure
+      - --entrypoints.web.http.redirections.entrypoint.scheme=https
+      - --certificatesresolvers.letsencrypt.acme.tlschallenge=true
+      - --certificatesresolvers.letsencrypt.acme.email=${TRAEFIK_ACME_EMAIL:?TRAEFIK_ACME_EMAIL is required}
+      - --certificatesresolvers.letsencrypt.acme.storage=/letsencrypt/acme.json
+      - --ping=true
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ${DOCKER_SOCKET_PATH:-/var/run/docker.sock}:/var/run/docker.sock:ro
+      - traefik_letsencrypt:/letsencrypt
+    logging: *default-logging
+    networks:
+      - n8n-prod
+
+  n8n-main:
+    <<: *n8n-common
+    command: start
+    volumes:
+      - n8n_main_data:/home/node/.n8n
+    labels:
+      - traefik.enable=true
+      - traefik.docker.network=n8n-prod
+      - traefik.http.routers.n8n-editor.rule=Host(`${N8N_EDITOR_HOST:?N8N_EDITOR_HOST is required}`)
+      - traefik.http.routers.n8n-editor.entrypoints=websecure
+      - traefik.http.routers.n8n-editor.tls.certresolver=letsencrypt
+      - traefik.http.services.n8n-editor.loadbalancer.server.port=5678
+
+  n8n-webhook:
+    <<: *n8n-common
+    command: webhook
+    labels:
+      - traefik.enable=true
+      - traefik.docker.network=n8n-prod
+      - traefik.http.routers.n8n-webhook.rule=Host(`${N8N_WEBHOOK_HOST:?N8N_WEBHOOK_HOST is required}`)
+      - traefik.http.routers.n8n-webhook.entrypoints=websecure
+      - traefik.http.routers.n8n-webhook.tls.certresolver=letsencrypt
+      - traefik.http.services.n8n-webhook.loadbalancer.server.port=5678
+
+  n8n-worker:
+    <<: *n8n-common
+    command: worker --concurrency=${N8N_WORKER_CONCURRENCY:-10}
+
+  n8n-worker-runners:
+    image: n8nio/runners:${N8N_VERSION:-2.11.4}
+    restart: unless-stopped
+    init: true
+    depends_on:
+      n8n-worker:
+        condition: service_healthy
+    environment:
+      N8N_RUNNERS_TASK_BROKER_URI: http://n8n-worker:5679
+      N8N_RUNNERS_AUTH_TOKEN: ${N8N_RUNNERS_AUTH_TOKEN:?N8N_RUNNERS_AUTH_TOKEN is required}
+      N8N_RUNNERS_AUTO_SHUTDOWN_TIMEOUT: ${N8N_RUNNERS_AUTO_SHUTDOWN_TIMEOUT:-15}
+    logging: *default-logging
+    networks:
+      - n8n-prod
+
+  redis:
+    image: redis:${REDIS_VERSION:-7.4-alpine}
+    restart: unless-stopped
+    environment:
+      REDIS_PASSWORD: ${REDIS_PASSWORD:?REDIS_PASSWORD is required}
+    command:
+      - redis-server
+      - --appendonly
+      - "yes"
+      - --requirepass
+      - ${REDIS_PASSWORD:?REDIS_PASSWORD is required}
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test:
+        - CMD-SHELL
+        - redis-cli -a "$${REDIS_PASSWORD}" ping | grep PONG
+      interval: 10s
+      timeout: 5s
+      retries: 10
+    logging: *default-logging
+    networks:
+      - n8n-prod
+
+  postgres:
+    image: postgres:${POSTGRES_VERSION:-16.8-alpine}
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:?POSTGRES_DB is required}
+      POSTGRES_USER: ${POSTGRES_USER:?POSTGRES_USER is required}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD is required}
+    volumes:
+      - postgres_prod_data:/var/lib/postgresql/data
+    healthcheck:
+      test:
+        - CMD-SHELL
+        - pg_isready -U "$${POSTGRES_USER}" -d "$${POSTGRES_DB}"
+      interval: 10s
+      timeout: 5s
+      retries: 10
+    logging: *default-logging
+    networks:
+      - n8n-prod
+
+networks:
+  n8n-prod:
+    name: n8n-prod
+
+volumes:
+  n8n_main_data:
+  postgres_prod_data:
+  redis_data:
+  traefik_letsencrypt:

@@ -5,6 +5,11 @@ set -eu
 DIRNAME=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
 APP_ENV=local
 ACTION="${1:-}"
+MODE="${2:-}"
+ENV_SAMPLE_FILE='.env.sample'
+ENV_FILE='.env'
+COMPOSE_FILE='docker-compose.yml'
+N8N_SERVICE_NAME='n8n'
 
 if command -v tput >/dev/null 2>&1 && [ -t 1 ]; then
 	RED=$(tput setaf 1)
@@ -34,11 +39,11 @@ usage() {
 	echo ""
 	echo "################ ${YELLOW}AVAILABLE COMMANDS${RESET_COLOR} ################"
 	echo ""
-	echo "./docker.sh start     Start docker compose and follow logs"
-	echo "./docker.sh stop      Stop docker compose"
-	echo "./docker.sh restart   Rebuild, restart, and follow logs"
-	echo "./docker.sh update    Pull base image metadata, rebuild, and follow logs"
-	echo "./docker.sh ssh       Open a shell in the n8n container"
+	echo "./docker.sh start [--prod]     Start docker compose and follow logs"
+	echo "./docker.sh stop [--prod]      Stop docker compose"
+	echo "./docker.sh restart [--prod]   Rebuild, restart, and follow logs"
+	echo "./docker.sh update [--prod]    Pull base image metadata, rebuild, and follow logs"
+	echo "./docker.sh ssh [--prod]       Open a shell in the n8n container"
 	echo ""
 	exit 1
 }
@@ -56,23 +61,20 @@ detect_compose() {
 
 compose() {
 	if [ "$DOCKER_COMPOSE" = 'docker compose' ]; then
-		docker compose "$@"
+		docker compose --env-file "$ENV_FILE" -f "$COMPOSE_FILE" "$@"
 	else
-		docker-compose "$@"
+		docker-compose --env-file "$ENV_FILE" -f "$COMPOSE_FILE" "$@"
 	fi
 }
 
 check_env_vars() {
-	env_sample_file='.env.sample'
-	env_file='.env'
-
-	if [ ! -f "$env_sample_file" ]; then
-		display_error "Erreur : le fichier $env_sample_file n'existe pas."
+	if [ ! -f "$ENV_SAMPLE_FILE" ]; then
+		display_error "Erreur : le fichier $ENV_SAMPLE_FILE n'existe pas."
 		return 1
 	fi
 
-	if [ ! -f "$env_file" ]; then
-		display_error "Erreur : le fichier $env_file n'existe pas."
+	if [ ! -f "$ENV_FILE" ]; then
+		display_error "Erreur : le fichier $ENV_FILE n'existe pas."
 		return 1
 	fi
 
@@ -85,18 +87,18 @@ check_env_vars() {
 		esac
 
 		var_name=${line%%=*}
-		if ! grep -q "^${var_name}=" "$env_file"; then
-			display_error "Variable manquante dans $env_file : $var_name"
+		if ! grep -q "^${var_name}=" "$ENV_FILE"; then
+			display_error "Variable manquante dans $ENV_FILE : $var_name"
 			missing_vars=$((missing_vars + 1))
 		fi
-	done < "$env_sample_file"
+	done < "$ENV_SAMPLE_FILE"
 
 	if [ "$missing_vars" -eq 0 ]; then
-		display_success "Toutes les variables de $env_sample_file sont presentes dans $env_file."
+		display_success "Toutes les variables de $ENV_SAMPLE_FILE sont presentes dans $ENV_FILE."
 		return 0
 	fi
 
-	display_error "$missing_vars variable(s) manquante(s) dans $env_file."
+	display_error "$missing_vars variable(s) manquante(s) dans $ENV_FILE."
 	return 1
 }
 
@@ -110,9 +112,9 @@ follow_logs() {
 }
 
 open_shell() {
-	container_id=$(compose ps -q n8n)
+	container_id=$(compose ps -q "$N8N_SERVICE_NAME")
 	if [ -z "$container_id" ]; then
-		display_error "Le conteneur n8n n'est pas demarre. Lance d'abord ./docker.sh start."
+		display_error "Le conteneur $N8N_SERVICE_NAME n'est pas demarre. Lance d'abord ./docker.sh start${MODE:+ $MODE}."
 		exit 1
 	fi
 
@@ -125,6 +127,17 @@ open_shell() {
 
 cd "$DIRNAME"
 
+if [ "$MODE" = '--prod' ]; then
+	APP_ENV=prod
+	ENV_SAMPLE_FILE='.env.prod.sample'
+	ENV_FILE='.env.prod'
+	COMPOSE_FILE='docker-compose.prod.yml'
+	N8N_SERVICE_NAME='n8n-main'
+elif [ -n "$MODE" ]; then
+	display_error "Option invalide : $MODE"
+	usage
+fi
+
 echo ""
 echo "***************************************************************************************************************"
 echo "***************************************************************************************************************"
@@ -135,13 +148,15 @@ echo ""
 
 detect_compose
 display "=> Available command: ($DOCKER_COMPOSE)"
+display "=> Compose file: $COMPOSE_FILE"
+display "=> Env file: $ENV_FILE"
 
 if [ -z "$ACTION" ]; then
 	usage
 fi
 
 if ! check_env_vars; then
-	display_error "Le script est arrete car des variables sont manquantes dans .env."
+	display_error "Le script est arrete car des variables sont manquantes dans $ENV_FILE."
 	exit 1
 fi
 
