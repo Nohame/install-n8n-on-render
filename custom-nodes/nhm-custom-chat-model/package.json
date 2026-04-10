@@ -1,0 +1,55 @@
+{
+	"name": "n8n-nodes-nhm-custom-chat-model",
+	"version": "0.1.0",
+	"description": "Custom n8n Language Model node that calls a local HTTP chat API.",
+	"keywords": [
+		"n8n-community-node-package"
+	],
+	"private": true,
+	"license": "MIT",
+	"author": {
+		"name": "Nohame"
+	},
+	"repository": {
+		"type": "git",
+		"url": "https://github.com/Nohame/install-n8n-on-render.git"
+	},
+	"engines": {
+		"node": ">=18.10",
+		"pnpm": ">=9.1"
+	},
+	"packageManager": "pnpm@9.1.4",
+	"main": "index.js",
+	"scripts": {
+		"preinstall": "npx only-allow pnpm",
+		"build": "tsc && gulp build:icons",
+		"dev": "tsc --watch",
+		"format": "prettier nodes package.json --write",
+		"lint": "eslint nodes package.json",
+		"lintfix": "eslint nodes package.json --fix"
+	},
+	"files": [
+		"dist"
+	],
+	"n8n": {
+		"n8nNodesApiVersion": 1,
+		"nodes": [
+			"dist/nodes/NhmCustomChatModel/NhmCustomChatModel.node.js"
+		]
+	},
+	"devDependencies": {
+		"@types/node": "^22.13.1",
+		"@typescript-eslint/parser": "^7.15.0",
+		"eslint": "^8.56.0",
+		"eslint-plugin-n8n-nodes-base": "^1.16.1",
+		"gulp": "^4.0.2",
+		"prettier": "^3.3.2",
+		"typescript": "^5.5.3"
+	},
+	"peerDependencies": {
+		"n8n-workflow": "*"
+	},
+	"dependencies": {
+		"@langchain/core": "^0.3.0"
+	}
+}
