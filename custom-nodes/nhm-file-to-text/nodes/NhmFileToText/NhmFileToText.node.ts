@@ -1,5 +1,4 @@
 import type {
-  IDataObject,
   IExecuteFunctions,
   INodeExecutionData,
   INodeType,
@@ -53,7 +52,7 @@ export class NhmFileToText implements INodeType {
         const fileName = binaryData.fileName ?? '';
 
         const result = await extractText(buffer, mimeType, fileName);
-        returnData.push({ json: result as unknown as IDataObject });
+        returnData.push({ json: { ...result } });
       } catch (error) {
         const message = error instanceof Error ? error.message : 'Erreur inconnue';
         if (this.continueOnFail()) {
