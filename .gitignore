@@ -4,5 +4,9 @@
 /AGENTS.md
 /custom-nodes/nhm-docx-to-text/node_modules/
 /custom-nodes/nhm-docx-to-text/dist/
+/custom-nodes/nhm-file-to-text/node_modules/
+/custom-nodes/nhm-file-to-text/dist/
+/custom-nodes/nhm-custom-chat-model/node_modules/
+/custom-nodes/nhm-custom-chat-model/dist/
 .DS_Store
 .worktrees/
