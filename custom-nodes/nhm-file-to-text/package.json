@@ -2,15 +2,22 @@
   "name": "n8n-nodes-nhm-file-to-text",
   "version": "0.1.0",
   "description": "Custom n8n node that extracts text from common file formats (DOCX, PDF, ODT, TXT, CSV, HTML).",
-  "keywords": ["n8n-community-node-package"],
+  "keywords": [
+    "n8n-community-node-package"
+  ],
   "private": true,
   "license": "MIT",
-  "author": { "name": "Nohame" },
+  "author": {
+    "name": "Nohame"
+  },
   "repository": {
     "type": "git",
     "url": "https://github.com/Nohame/install-n8n-on-render.git"
   },
-  "engines": { "node": ">=18.10", "pnpm": ">=9.1" },
+  "engines": {
+    "node": ">=18.10",
+    "pnpm": ">=9.1"
+  },
   "packageManager": "pnpm@9.1.4",
   "main": "index.js",
   "scripts": {
@@ -21,13 +28,18 @@
     "lint": "eslint nodes package.json",
     "lintfix": "eslint nodes package.json --fix"
   },
-  "files": ["dist"],
+  "files": [
+    "dist"
+  ],
   "n8n": {
     "n8nNodesApiVersion": 1,
-    "nodes": ["dist/nodes/NhmFileToText/NhmFileToText.node.js"]
+    "nodes": [
+      "dist/nodes/NhmFileToText/NhmFileToText.node.js"
+    ]
   },
   "devDependencies": {
     "@types/adm-zip": "^0.5.5",
+    "@types/html-to-text": "^9.0.4",
     "@types/jest": "^29.5.12",
     "@types/node": "^22.13.1",
     "@types/pdf-parse": "^1.1.4",
@@ -41,7 +53,9 @@
     "ts-jest": "^29.2.5",
     "typescript": "^5.5.3"
   },
-  "peerDependencies": { "n8n-workflow": "*" },
+  "peerDependencies": {
+    "n8n-workflow": "*"
+  },
   "dependencies": {
     "adm-zip": "^0.5.10",
     "html-to-text": "^9.0.5",
