@@ -22,6 +22,12 @@ COPY ./custom-nodes/nhm-custom-chat-model/package.json /data/custom-nodes/nhm-cu
 WORKDIR /data/custom-nodes/nhm-custom-chat-model
 RUN NODE_ENV=development pnpm install --store-dir /data/custom-nodes/.pnpm-store --no-frozen-lockfile --ignore-scripts
 
+# --- nhm-file-to-text ---
+COPY ./custom-nodes/nhm-file-to-text/package.json /data/custom-nodes/nhm-file-to-text/package.json
+
+WORKDIR /data/custom-nodes/nhm-file-to-text
+RUN NODE_ENV=development pnpm install --store-dir /data/custom-nodes/.pnpm-store --no-frozen-lockfile --ignore-scripts
+
 # --- Copy all sources & build ---
 WORKDIR /data/custom-nodes
 COPY ./custom-nodes/ /data/custom-nodes/
@@ -30,6 +36,9 @@ WORKDIR /data/custom-nodes/nhm-docx-to-text
 RUN pnpm run build
 
 WORKDIR /data/custom-nodes/nhm-custom-chat-model
+RUN pnpm run build
+
+WORKDIR /data/custom-nodes/nhm-file-to-text
 RUN pnpm run build
 
 USER node
